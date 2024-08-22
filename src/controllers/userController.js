@@ -18,7 +18,7 @@ const register = async(req,res)=>{
         address: address
     })
     try {
-        const existingUser = await Employee.findOne(username)
+        const existingUser = await Employee.findOne({user_name:username})
         if(existingUser){
             return res.status(402).json({message:"employee already existed"})
         }
@@ -37,23 +37,25 @@ const login = async(req,res)=>{
         return res.status(400).json({message: "missing required fields"});
     }
     try {
-        const employee = await Employee.findOne(username);
+        const employee = await Employee.findOne({user_name:username});
         if(!employee){
             return res.status(400).json({message: "Invalid username"});
         }
-        const password = await bcrypt.compare(password, employee.password);
-        if(!password){
+        const validpassword = await bcrypt.compare(password, employee.password);
+        if(!validpassword){
             return res.status(400).json({message:"Invalid password....."});
         }
-        return res.status(200).json({message: "employee login successfully......"})
+        return res.status(200).json({message: "employee login successfully......",id})
     } catch (error) {
-        return res.status(500).json({error});
+        console.error(error);
+        return res.status(500).json({err: error});
         
     }
 }
 
 const getEmployee = async(req,res)=>{
     const {id} = req.params;
+    console.log("......",id)
     try {
         const employee = await Employee.findById(id);
         if(!employee){
@@ -78,14 +80,13 @@ const getAllEmployee = async(req,res)=>{
 const deleteEmployee = async (req, res) => {
     const { id } = req.params;
     try {
-        const employee = await User.findById(id);
+        const employee = await User.findByIdAndDelete(id);
         if (!employee) {
             return res.status(404).json({ message: "employee not found" });
         }
-        await employee.remove();
         res.status(200).json({ message: "employee deleted successfully" });
     } catch (error) {
-        res.status(500).json({ message: "Error occurred" });
+        res.status(500).json({ message: "Error occurred" ,error});
     }
 };
 

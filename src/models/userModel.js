@@ -21,7 +21,7 @@ const employeeSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    designation: {
+    address: {
         type: String,
         required: true,
         unique:false
