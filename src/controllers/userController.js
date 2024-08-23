@@ -1,6 +1,7 @@
 const Employee = require("../models/userModel");
 const bcrypt = require('bcryptjs');
 const uuidV4 = require('uuid');
+const jwt = require('jsonwebtoken');
 
 const register = async(req,res)=>{
     const {username, password,phoneNo, email, address} =  req.body;
@@ -55,15 +56,17 @@ const login = async(req,res)=>{
 
 const getEmployee = async(req,res)=>{
     const {id} = req.params;
-    console.log("......",id)
+    console.log("......",req.params)
     try {
         const employee = await Employee.findById(id);
         if(!employee){
             return res.status(400).json({message: "employee not found"})
         }
-        return res.status(200).json({message: "employee data..."})
+        const empDetails = employee.toObject()
+        delete empDetails.password
+        return res.status(200).json({message: "employee data...", data: empDetails})
     } catch (error) {
-        return res.status(500).json({message: "error retriving data"})
+        return res.status(500).json({message: "error retriving data", error})
     }
 }
 
@@ -80,16 +83,42 @@ const getAllEmployee = async(req,res)=>{
 const deleteEmployee = async (req, res) => {
     const { id } = req.params;
     try {
-        const employee = await User.findByIdAndDelete(id);
+        const employee = await Employee.findByIdAndDelete(id);
         if (!employee) {
             return res.status(404).json({ message: "employee not found" });
         }
-        res.status(200).json({ message: "employee deleted successfully" });
+        return res.status(200).json({ message: "employee deleted successfully" });
     } catch (error) {
-        res.status(500).json({ message: "Error occurred" ,error});
+        return res.status(500).json({ message: "Error occurred" , error});
     }
 };
 
+const updateEmployee = async (req, res) => {
+    const { id } = req.params;
+    const updateData = {...req.body}
+    try {
+        if (updateData.password) {
+            delete updateData.password;
+        }
+        const employee = await Employee.findByIdAndUpdate(id, updateData, { new: true});
+        if (!employee) {
+            return res.status(404).json({ message: "employee not found" });
+        }
+        return res.status(200).json({ message: "employee updated successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Error occurred" , error});
+    }
+};
+
+const generateToken = async (req, res) => {
+    try {
+        const token = jwt.sign(req.body, process.env.JWT_SECRET_KEY, { expiresIn: '2m' })
+        return res.status(200).json({ message: "token generated succesfully", token });
+    } catch (error) {
+        
+    }
+}
 
 
-module.exports = {register, login, getEmployee, deleteEmployee, getAllEmployee};
+
+module.exports = {register, login, getEmployee, deleteEmployee, getAllEmployee, updateEmployee, generateToken};
